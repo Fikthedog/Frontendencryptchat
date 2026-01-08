@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encrypted Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white h-screen flex flex-col font-sans">
+    <!-- Login Screen -->
+    <div id="login-screen" class="flex-1 flex flex-col items-center justify-center p-4">
+        <h1 class="text-4xl font-bold mb-2 text-green-500 tracking-wider">SECURE CHAT</h1>
+        <p class="text-gray-400 mb-8">End-to-End Encrypted Messaging</p>
+        
+        <div class="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
+            <!-- Tabs -->
+            <div class="flex gap-4 mb-6 border-b border-gray-700 pb-2">
+                <button id="tab-login" class="text-green-500 font-bold border-b-2 border-green-500 pb-1">Login</button>
+                <button id="tab-register" class="text-gray-400 hover:text-white pb-1 transition">Register</button>
+            </div>
+
+            <div class="mb-4">
+                <label class="block mb-2 text-sm font-medium text-gray-300">Server URL</label>
+                <input type="text" id="server-url-input" class="w-full bg-gray-700 p-3 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none text-white transition" placeholder="https://your-server.com">
+            </div>
+
+            <div class="mb-4">
+                <label class="block mb-2 text-sm font-medium text-gray-300">Username</label>
+                <input type="text" id="username-input" class="w-full bg-gray-700 p-3 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none text-white transition" placeholder="Alice">
+            </div>
+
+            <div class="mb-6">
+                <label class="block mb-2 text-sm font-medium text-gray-300">Password</label>
+                <input type="password" id="password-input" class="w-full bg-gray-700 p-3 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none text-white transition" placeholder="••••••••">
+            </div>
+            
+            <button id="auth-btn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg transition transform active:scale-95 shadow-lg">
+                Login & Join
+            </button>
+            
+            <p id="status-msg" class="mt-4 text-center text-sm text-yellow-400 hidden animate-pulse">Initializing...</p>
+            <p id="error-msg" class="mt-4 text-center text-sm text-red-400 hidden"></p>
+        </div>
+    </div>
+
+    <!-- Chat Screen -->
+    <div id="chat-screen" class="hidden flex-1 flex flex-col h-full">
+        <!-- Header -->
+        <header class="bg-gray-800 p-4 shadow-md border-b border-gray-700 flex justify-between items-center z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <h1 class="font-bold text-xl text-white">Secure Chat</h1>
+                <span id="admin-badge" class="hidden bg-red-600 text-xs px-2 py-0.5 rounded uppercase font-bold tracking-wide">ADMIN</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <div class="text-sm text-gray-300 font-medium" id="display-username">User</div>
+                    <div class="text-xs text-gray-500" id="user-count">Connecting...</div>
+                </div>
+                <button id="admin-panel-btn" class="hidden bg-gray-700 hover:bg-gray-600 text-white p-2 rounded text-xs border border-gray-500">
+                    Admin Panel
+                </button>
+            </div>
+        </header>
+        
+        <!-- Messages Area -->
+        <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900 scroll-smooth">
+            <div class="text-center text-gray-600 text-sm my-4">
+                Messages are end-to-end encrypted. The server cannot read them.
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="bg-gray-800 p-4 border-t border-gray-700">
+            <form id="message-form" class="max-w-4xl mx-auto flex gap-3">
+                <input type="text" id="message-input" class="flex-1 bg-gray-700 p-3 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none text-white placeholder-gray-500" placeholder="Type a message..." autocomplete="off">
+                <button type="submit" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold transition shadow-md whitespace-nowrap">
+                    Send
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl border border-gray-600 flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white">Admin Dashboard</h2>
+                <button id="close-admin-btn" class="text-gray-400 hover:text-white">&times;</button>
+            </div>
+            
+            <div class="p-4 overflow-y-auto flex-1">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <div class="text-sm text-gray-400">Total Users</div>
+                        <div class="text-2xl font-bold" id="stat-total-users">-</div>
+                    </div>
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <div class="text-sm text-gray-400">Online Now</div>
+                        <div class="text-2xl font-bold" id="stat-online-users">-</div>
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-bold mb-3 text-gray-300">User Management</h3>
+                <div class="bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
+                    <table class="w-full text-left text-sm text-gray-400">
+                        <thead class="bg-gray-800 text-gray-200 uppercase text-xs">
+                            <tr>
+                                <th class="p-3">Username</th>
+                                <th class="p-3">Role</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-user-list">
+                            <!-- Users injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-gray-700 bg-gray-800 rounded-b-xl flex justify-end">
+                 <button id="refresh-admin-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm">Refresh Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Socket.io -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <!-- App Logic -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
